@@ -128,16 +128,14 @@ app.post('/api/perplexity', async (req, res) => {
 // ============================================
 app.post('/api/revenuecat-webhook', async (req, res) => {
   try {
-    // Log para debug - ver si el webhook llega
     console.log('🔔 Webhook endpoint hit!');
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
 
-    // Verificación de auth deshabilitada temporalmente para debug
-    // const authHeader = req.headers['authorization'];
-    // if (REVENUECAT_WEBHOOK_SECRET && authHeader !== `Bearer ${REVENUECAT_WEBHOOK_SECRET}`) {
-    //   console.log('Webhook auth failed');
-    //   return res.status(401).json({ error: 'Unauthorized' });
-    // }
+    // Verificar autenticación del webhook (opcional - solo si configuraste secret en RevenueCat)
+    const authHeader = req.headers['authorization'];
+    if (REVENUECAT_WEBHOOK_SECRET && authHeader !== `Bearer ${REVENUECAT_WEBHOOK_SECRET}`) {
+      console.log('Webhook auth failed - expected:', REVENUECAT_WEBHOOK_SECRET ? 'Bearer ***' : 'none');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const event = req.body;
     console.log('RevenueCat webhook received:', event.event?.type);
