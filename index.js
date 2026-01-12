@@ -280,6 +280,53 @@ app.get('/api/influencer/:code/purchases', async (req, res) => {
   }
 });
 
+// Crear nuevo código de influencer (solo admin)
+app.post('/api/influencer/create', async (req, res) => {
+  try {
+    const { code, adminKey, commissionRate } = req.body;
+
+    // Verificar admin key
+    const ADMIN_KEY = process.env.ADMIN_KEY || 'gainsai2024admin';
+    if (adminKey !== ADMIN_KEY) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!code || code.length < 3) {
+      return res.status(400).json({ error: 'Code must be at least 3 characters' });
+    }
+
+    if (!db) {
+      return res.status(500).json({ error: 'Database not available' });
+    }
+
+    const codeUppercased = code.toUpperCase();
+    const codeRef = db.collection('influencer_codes').doc(codeUppercased);
+
+    // Verificar si ya existe
+    const existing = await codeRef.get();
+    if (existing.exists) {
+      return res.status(400).json({ error: 'Code already exists' });
+    }
+
+    // Crear el código
+    await codeRef.set({
+      code: codeUppercased,
+      total_signups: 0,
+      total_purchases: 0,
+      total_revenue: 0,
+      commission_rate: commissionRate || 0.20,
+      created_at: admin.firestore.Timestamp.now(),
+      last_used_at: null,
+      last_purchase_at: null
+    });
+
+    res.json({ success: true, code: codeUppercased });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Gains AI Backend API' });
