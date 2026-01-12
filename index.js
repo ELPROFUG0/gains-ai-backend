@@ -157,12 +157,13 @@ app.post('/api/revenuecat-webhook', async (req, res) => {
     console.log('Subscriber attributes:', JSON.stringify(subscriberAttributes, null, 2));
 
     // Buscar el código en diferentes formatos posibles
-    const influencerCode = subscriberAttributes['$influencerCode']?.value ||
-                          subscriberAttributes['$referralCode']?.value ||
-                          subscriberAttributes['influencerCode']?.value ||
-                          subscriberAttributes['referralCode']?.value ||
-                          event.event?.attributes?.['$influencerCode']?.value ||
-                          event.event?.attributes?.['$referralCode']?.value || '';
+    // También buscar en $campaign que es donde se guarda el código
+    const influencerCode = subscriberAttributes['influencer_code']?.value ||
+                          subscriberAttributes['referral_code']?.value ||
+                          subscriberAttributes['$campaign']?.value ||
+                          event.event?.attributes?.['influencer_code']?.value ||
+                          event.event?.attributes?.['referral_code']?.value ||
+                          event.event?.attributes?.['$campaign']?.value || '';
 
     console.log('Extracted influencer code:', influencerCode);
 
