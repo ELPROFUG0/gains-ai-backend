@@ -137,22 +137,34 @@ app.post('/api/revenuecat-webhook', async (req, res) => {
 
     const event = req.body;
     console.log('RevenueCat webhook received:', event.event?.type);
+    console.log('Full event data:', JSON.stringify(event, null, 2));
 
     // Solo procesar eventos de compra inicial o renovación
     const purchaseEvents = [
       'INITIAL_PURCHASE',
       'RENEWAL',
-      'PRODUCT_CHANGE'
+      'PRODUCT_CHANGE',
+      'NON_RENEWING_PURCHASE'
     ];
 
     if (!purchaseEvents.includes(event.event?.type)) {
+      console.log('Event type not in purchase events, skipping');
       return res.json({ received: true, processed: false });
     }
 
-    // Extraer datos del evento
+    // Extraer datos del evento - buscar en múltiples ubicaciones
     const subscriberAttributes = event.event?.subscriber_attributes || {};
+    console.log('Subscriber attributes:', JSON.stringify(subscriberAttributes, null, 2));
+
+    // Buscar el código en diferentes formatos posibles
     const influencerCode = subscriberAttributes['$influencerCode']?.value ||
-                          subscriberAttributes['$referralCode']?.value || '';
+                          subscriberAttributes['$referralCode']?.value ||
+                          subscriberAttributes['influencerCode']?.value ||
+                          subscriberAttributes['referralCode']?.value ||
+                          event.event?.attributes?.['$influencerCode']?.value ||
+                          event.event?.attributes?.['$referralCode']?.value || '';
+
+    console.log('Extracted influencer code:', influencerCode);
 
     const price = event.event?.price || 0;
     const productId = event.event?.product_id || '';
